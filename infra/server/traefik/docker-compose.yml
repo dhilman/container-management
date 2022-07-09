@@ -1,0 +1,50 @@
+version: "3.3"
+
+services:
+  traefik:
+    image: "traefik:v2.8"
+    container_name: "traefik"
+    command:
+      - "--global.checknewversion=true"
+      - "--global.sendanonymoususage=false"
+      - "--api=true"
+      - "--api.dashboard=true"
+
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+
+      - "--certificatesresolvers.staging.acme.email=${EMAIL_FOR_CERT:?err}"
+      - "--certificatesresolvers.staging.acme.storage=/letsencrypt/acme.staging.json"
+      - "--certificatesresolvers.staging.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.staging.acme.httpchallenge.entrypoint=web"
+
+      - "--certificatesresolvers.prod.acme.email=${EMAIL_FOR_CERT:?err}"
+      - "--certificatesresolvers.prod.acme.storage=/letsencrypt/acme.prod.json"
+      - "--certificatesresolvers.prod.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.prod.acme.httpchallenge.entrypoint=web"
+
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "~/letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`admin.${DOMAIN:?err}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=prod"
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${ADMIN_USERS:?err}"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik.service=api@internal"
+
+    networks:
+      - web
+
+networks:
+  web:
+    name: web
