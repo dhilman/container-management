@@ -23,8 +23,8 @@ resource "digitalocean_container_registry" "default" {
   subscription_tier_slug = "starter"
 }
 
-resource "digitalocean_ssh_key" "default" {
-  name       = "david-ssh-key"
+resource "digitalocean_ssh_key" "personal" {
+  name       = "personal-ssh-key"
   public_key = var.ssh_key_pub
 }
 
@@ -38,10 +38,12 @@ resource "digitalocean_droplet" "default" {
   # Available sizes: https://docs.digitalocean.com/reference/api/api-reference/#tag/Sizes
   size     = "s-1vcpu-1gb"
   ssh_keys = [
-    digitalocean_ssh_key.default.id,
+    digitalocean_ssh_key.personal.id,
   ]
 }
 
+# Creating an IP address to bind the domain records to.
+# Allows to recreate the server without effecting domain records.
 resource "digitalocean_reserved_ip" "default" {
   region = "lon1"
 }
@@ -69,6 +71,7 @@ resource "digitalocean_record" "wildcard_redirect" {
   ttl    = 3600
 }
 
+# Assigning IP address of the server to the reserved IP address.
 resource "digitalocean_reserved_ip_assignment" "default" {
   ip_address = digitalocean_reserved_ip.default.ip_address
   droplet_id = digitalocean_droplet.default.id
