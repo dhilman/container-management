@@ -88,6 +88,8 @@ and contains comments to explain all the resources and variables.
 
 ---
 
+Steps:
+
 1. [Install terraform locally](https://learn.hashicorp.com/tutorials/terraform/install-cli)
 2. Register with [Terraform Cloud](https://app.terraform.io/session):
     1. create an organization
@@ -124,8 +126,72 @@ should be printed. This can be used to SSH onto the server (access to your SSH k
 
 > **Outcome**: setup router with ability to add service based routing and TLS/SSL certificate management dynamically.
 
+The server applications will be run using Docker's `docker-compose`. 
+If the [Terraform](#solution-terraform-cloud--digitalocean) module was used to create the server 
+then Docker and `docker-compose` would come pre-installed.
+
+- [ ] TODO: env variables pattern explanation
+
+### Solution: Routing with Traefik
+
+Traefik is an open source networking application, it allows to achieve all the desired routing outcomes
+with a fairy minimal configuration.
+
+Traefik background TLDR:
+- There are two types of Traefik configuration
+    - static configuration - read once at deployment time
+    - dynamic configuration - can be updated/provided post deployment (e.g. routing rules provided along deployment of new services)
+- Traefik configuration can be provided in multiple ways:
+  - file, CLI commands, docker-compose labels
+- Optional and amazing features:
+    - Manages TLS/SSL certificates automatically (issuing + renewal)
+    - Middleware (e.g. BasicAuth, CORS) 
+    - HealthChecks (e.g. BasicAuth, CORS)
+    - Admin dashboard
+    - Metrics
+
+---
+
+Steps:
+
+1. Update the `.env` file inside [!TODO!] with your variables
+   - Provide your own `ADMIN_USERS` as `user:password` pairs. This is currently set to `user=foo`, `password=bar`
+   - To generate `user:password` use: `echo $(htpasswd -nb foo bar)`
+2. Copy the `./services/traefik` directory to your server
+   1. ```
+      # substitute <server_ip> with actual IP of the server
+      scp -r services/traefik "root@<server_ip>:~/services/"
+      ```
+3. Deploy Traefik on the server
+   1. ```
+      # ssh into the server
+      ssh <server_ip> -i ~/.ssh/id_rsa -l root
+      cd ~/services/traefik
+      # run Traefik services in detached (-d) mode
+      docker-compose up -d
+      ```
+4. Visit your personal traefik dashboard: `admin.<domain>/dashboard`
+
+#### Traefik opinionated choices
+
+> Static configuration provided inside [docker-compose.yml](services/traefik/docker-compose.yml) as CLI commands.
+> Dynamic configuration provided as **docker labels** inside docker-compose files of new services.
+
+I have experimented with both file (`.yml`) and CLI commands for Traefik configuration. 
+The config file was initially my preffered choice due to its clean structure. When only considering 
+the static configuration - file seems appropriate - as the path to the file has to be provided 
+inside the Traefik deployment file. However, when it comes to specifying dynamic configuration having this live 
+outside of the service deployment file (i.e. `docker-compose.yml`) has proved fairy inconvenient. 
+Having static configuration provided in a file and dynamic as labels is entirely possible, 
+but for consistency I have preferred specifying both in the `docker-compose.yml`.
+
+
 ## Containerisation
 
 > **Outcome**: containerise application, build and push on merge to master.
 
 ## Container Deployment
+
+## Future Extensions:
+- Multiple nodes (docker-swarm)
+- Remote storage
