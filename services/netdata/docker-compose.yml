@@ -1,0 +1,38 @@
+version: '3.3'
+
+services:
+  netdata:
+    image: netdata/netdata
+    volumes:
+      - "netdataconfig:/etc/netdata"
+      - "netdatalib:/var/lib/netdata"
+      - "netdatacache:/var/cache/netdata"
+      - "/etc/passwd:/host/etc/passwd:ro"
+      - "/etc/group:/host/etc/group:ro"
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/etc/os-release:/host/etc/os-release:ro"
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - "apparmor=unconfined"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netdata.rule=Host(`netdata.${DOMAIN:?err}`)"
+      - "traefik.http.routers.netdata.entrypoints=websecure"
+      - "traefik.http.routers.netdata.tls.certresolver=prod"
+      - "traefik.http.middlewares.auth.basicauth.users=${ADMIN_USERS:?err}"
+      - "traefik.http.routers.auth.middlewares=auth"
+      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+
+volumes:
+  netdataconfig: {}
+  netdatalib: {}
+  netdatacache: {}

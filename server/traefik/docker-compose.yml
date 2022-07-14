@@ -10,10 +10,14 @@ services:
       - "--api=true"
       - "--api.dashboard=true"
 
+      - "--metrics"
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls.certresolver=prod"
 
       - "--certificatesresolvers.staging.acme.email=${EMAIL_FOR_CERT:?err}"
       - "--certificatesresolvers.staging.acme.storage=/letsencrypt/acme.staging.json"
@@ -28,20 +32,21 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
     ports:
-      - "80:80"
-      - "443:443"
+      - target: 80
+        published: 80
+      - target: 443
+        published: 443
     volumes:
       - "~/letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     labels:
       - "traefik.enable=true"
+      - "traefik.http.middlewares.admin-auth.basicauth.users=${ADMIN_USERS:?err}"
+
       - "traefik.http.routers.traefik.rule=Host(`admin.${DOMAIN:?err}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls.certresolver=prod"
-      - "traefik.http.middlewares.traefik-auth.basicauth.users=${ADMIN_USERS:?err}"
-      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+      - "traefik.http.routers.traefik.middlewares=admin-auth"
       - "traefik.http.routers.traefik.service=api@internal"
-
     networks:
       - web
 

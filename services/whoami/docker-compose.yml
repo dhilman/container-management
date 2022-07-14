@@ -1,0 +1,17 @@
+version: '3.3'
+
+services:
+  nginx:
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN:?err}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=prod"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

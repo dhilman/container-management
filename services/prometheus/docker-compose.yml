@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./config/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prom.rule=Host(`prometheus.${DOMAIN:?err}`)"
+      - "traefik.http.routers.prom.middlewares=admin-auth"
+      - "traefik.http.routers.prom.entrypoints=websecure"
+      - "traefik.http.services.prom.loadbalancer.server.port=9090"
+
+networks:
+  web:
+    external: true
+
+volumes:
+  prometheus_data: {}
