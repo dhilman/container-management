@@ -53,12 +53,6 @@ resource "digitalocean_droplet" "default" {
   ]
 }
 
-# IP Address of the server.
-# This will print the IP on successful completion of the `terraform apply` command.
-output "server_ip_address" {
-  value = digitalocean_droplet.default.ipv4_address
-}
-
 # Creating a virtual/reserved IP address to bind the domain records to.
 # Allows to recreate the server without effecting domain records.
 resource "digitalocean_reserved_ip" "default" {

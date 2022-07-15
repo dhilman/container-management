@@ -53,73 +53,28 @@ At the time of writing all of these have a free plan which is
 
 ## Infrastructure
 
-> **Outcome**: programmatically provision a server, container registry and configure DNS records.
+This section provides option[s] to provision infrastructure described in the pseudocode below. 
+Feel free to skip if this infrastructure already exists.
 
-Terraform - open-source infrastructure as code tool - allows to achieve the above goal while minimizing
-the number of manual actions/configurations that have to be done.
+```js
+function create_infrastructure(domain_name, publis_ssh_keys, registry_name) {
+    const server = create_server(public_ssh_keys, apps=["docker"])
+    
+    const ip = create_virtual_ip()
+    bind_ip(ip, server.ip)
 
-Infrastructure providers (e.g. AWS, GCP, DigitalOcean) supply terraform modules that allow to 
-provision their infrastructure as code.
+    const domain = register_domain_name(domain_name, ip)
+    create_domain_alias(`www.` + domain_name, domain)
+    create_domain_record(`*.` + domain_name, ip)
 
-Terraform TLDR:
-- Terraform has to be installed locally
-- Main CLI commands are:
-  - `terraform init` - initialisation (nothing applied, modules downloaded)
-  - `terraform apply` - provisions specified infrastructure
-  - `terraform destroy` - destroys all infrastructure
-- `Terraform State` is a file that stores metadata about all the provisioned resources
+    create_container_registry(registry_name)
 
-Terraform Cloud TLDR:
-- Pricing: **FREE** (for all intents of this spec)
-- Manage Terraform remotely
-- Allows to store Terraform state and variables stored remotely
+    return ip
+}
+```
 
-### Solution: Terraform (Cloud) + DigitalOcean
-
-[![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg)](https://www.digitalocean.com/?refcode=0cfe0653d239&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
-
-DigitalOcean Pricing:
-- Server: **~7$ / month for server**
-- Container Registry, DNS Records, Virtual IP Addresses: **Free**
-
-This section refers exclusively to [./infrastructure/digital_ocean](./infrastructure/digital_ocean) directory.
-The [main.tf](./infrastructure/digital_ocean/main.tf) uses the official [DigitalOcean Terraform Provider](https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs)
-and contains comments to explain all the resources and variables.
-
----
-
-Steps:
-
-1. [Install terraform locally](https://learn.hashicorp.com/tutorials/terraform/install-cli)
-2. Register with [Terraform Cloud](https://app.terraform.io/session):
-    1. create an organization
-    2. substitute `organization` and `workspace name` at the top of [main.tf](./infrastructure/digital_ocean/main.tf) with
-         your values
-    3. run `terraform login` inside `./infrastructure/digital_ocean`
-3. Register with DigitalOcean
-    1. Generate **Read and Write** [Personal Access Token](https://docs.digitalocean.com/reference/api/create-personal-access-token/) (needed for terraform)
-    2. Point your domain to [DigitalOcean nameservers](https://docs.digitalocean.com/tutorials/dns-registrars/)
-4. Add variables to Terraform Cloud
-    1. Use DigitalOcean Token as the `do_token` variable
-    2. Use your **public ssh key** as `ssh_key_pub`
-    3. Variables have to match those in [variables.tf](./infrastructure/digital_ocean/variables.tf) exactly
-5. Create the infrastructure 🎉
-    1. Inside [./infrastructure/digital_ocean](./infrastructure/digital_ocean) 
-    2. ```sh
-       terraform login
-       terraform init
-       # apply command can take a minute to complete
-       # apply command will require explicit confirmation
-       terraform apply
-       ```
-
-When the Terraform `apply` command completes - infrastructure would
-have been created. If you go to DigitalOcean Dashboard you should be able to see your droplet,
-container registry and domain records.
-
-At the end of output from the `terraform apply` command, the IP address of the newly created server
-should be printed. This can be used to SSH onto the server.
-- `ssh <server_ip_address> -i ~/.ssh/id_rsa -l root`
+Implementation Options:
+- [README: Terraform + Digital Ocean](./infrastructure/digital_ocean/README.md)
 
 
 ## Server Setup
@@ -127,8 +82,7 @@ should be printed. This can be used to SSH onto the server.
 > **Outcome**: setup router with ability to add service based routing and TLS/SSL certificate management dynamically.
 
 The server applications will be run using Docker's `docker-compose`. 
-If the [Terraform](#solution-terraform-cloud--digitalocean) module was used to create the server 
-then Docker and `docker-compose` would come pre-installed.
+If [infrastructure](#infrastructure) section was followed, server will have docker installed, else install this separetely.
 
 ### Solution: Routing with Traefik
 
