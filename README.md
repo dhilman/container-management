@@ -40,7 +40,7 @@ They offer a generous free tier, and connecting data sources is fairly straightf
   - **Optional**: routing configuration
   - **Extension**: environment variables
   - **Extension**: monitoring / log aggregation
-  - **Stack**: Docker, Docker Compose, Traefik (extension: Doppler, Grafana)
+  - **Stack**: Docker, Docker Compose, Traefik
 
 ---
 
@@ -92,8 +92,6 @@ Traefik TLDR:
     - Health Checks 
     - Admin dashboard
     - Metrics
-
----
 
 #### Implementation
 
@@ -147,7 +145,7 @@ here is an example of deploying a `whoami` container at `whoami.<domain>`
 3. Copy the service directory to the server
    1. ```sh
       # substitute <server_ip> with actual IP of the server
-      scp services/whoami "root@<server_ip>:~/services/whoami"
+      scp -r services/whoami "root@<server_ip>:~/services/whoami"
       ```
 4. SSH into the server and deploy the container 🎉
    1. ```sh
