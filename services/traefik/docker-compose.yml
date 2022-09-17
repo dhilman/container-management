@@ -46,6 +46,8 @@ services:
         published: 80
       - target: 443
         published: 443
+      - target: 3000
+        published: 3000
     volumes:
       # Certificates will be stored here.
       - "~/letsencrypt:/letsencrypt"
@@ -62,8 +64,13 @@ services:
       # Require Admin Auth for this.
       - "traefik.http.routers.traefik.middlewares=admin-auth"
       - "traefik.http.routers.traefik.service=api@internal"
+      # Port forwarding 3000
+      - "traefik.http.routers.forward.rule=Host(`${DOMAIN:?err}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.forward.entrypoints=websecure"
+      - "traefik.http.services.forward.loadbalancer.server.port=3000"
     networks:
       - web
+      - host
 
 networks:
   web:

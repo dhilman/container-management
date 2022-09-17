@@ -5,6 +5,8 @@ services:
     image: traefik/whoami
     labels:
       - "traefik.enable=true"
+      # ${DOMAIN:?err} syntax requires DOMAIN variable
+      # to be set.
       - "traefik.http.routers.whoami.rule=Host(`whoami.${DOMAIN:?err}`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls.certresolver=prod"

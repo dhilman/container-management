@@ -36,7 +36,6 @@ that allow provisioning their infrastructure
 
 Terraform Cloud TLDR:
 - Pricing: **FREE** (for all intents of this spec)
-- Manage Terraform remotely
 - Allows to store Terraform state and variables remotely
 
 DigitalOcean Pricing:
